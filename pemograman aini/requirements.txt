@@ -1,4 +1,4 @@
-streamlit 
+streamlit
+sympy
+matplotlib
 numpy
-matplotlib.pyplot
-symbols, Eq, solve, sympify
