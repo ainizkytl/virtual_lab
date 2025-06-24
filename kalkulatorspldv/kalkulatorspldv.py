@@ -108,7 +108,7 @@ Eliminasi berarti **menghilangkan** salah satu variabel (baik $x$ atau $y$) dari
 ## Langkah 3: Mari Eliminasi!
 
 Pilih variabel yang ingin kamu eliminasi terlebih dahulu:
-""")
+
 elim_var = st.radio("Saya ingin mengeliminasi:", ("x", "y"))
 
 if elim_var == "x":
