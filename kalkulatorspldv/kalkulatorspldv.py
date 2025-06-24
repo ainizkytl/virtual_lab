@@ -350,7 +350,7 @@ st.markdown("""
 Aplikasi ini dirancang untuk membimbing Anda melalui proses penyelesaian SPLDV.
 Dengan mempraktikkan langkah-langkah eliminasi dan substitusi serta memvisualisasikan hasilnya,
 diharapkan pemahaman Anda tentang SPLDV akan semakin kuat.
-""")
+
 
 if st.button("Ulangi dari Awal"):
     st.session_state['found_x'] = None
