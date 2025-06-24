@@ -306,7 +306,7 @@ else:
 ## Langkah 5: Verifikasi Jawaban Anda
 
 Setelah Anda menemukan nilai $x$ dan $y$, mari kita cek apakah jawaban Anda benar!
-""")
+
 
 final_x = st.session_state.get('calculated_x') if st.session_state.get('calculated_x') is not None else st.session_state.get('found_x')
 final_y = st.session_state.get('calculated_y') if st.session_state.get('calculated_y') is not None else st.session_state.get('found_y')
