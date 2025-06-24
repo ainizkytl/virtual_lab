@@ -1,166 +1,202 @@
-import streamlit as st
-import numpy as np # Masih digunakan untuk linspace jika diperlukan untuk perhitungan, tapi tidak untuk plotting
-from sympy import symbols, Eq, solve, sympify
-
-# Mengatur konfigurasi halaman Streamlit
-st.set_page_config(page_title="Kalkulator SPLDV", layout="centered")
-st.title("📊 Kalkulator SPLDV") # Judul diperbarui
-st.write("Masukkan dua persamaan linear dua variabel dalam bentuk seperti `2*x + 3*y - 6 = 0`")
-
-# Input pengguna untuk persamaan
-pers1_input = st.text_input("Persamaan 1", value="2*x + 3*y - 6 = 0")
-pers2_input = st.text_input("Persamaan 2", value="x - y - 1 = 0")
-
-# Mendefinisikan simbol x dan y untuk SymPy
-x, y = symbols('x y')
-
-try:
-    # Menguraikan input persamaan menjadi objek SymPy Eq (Equation)
-    pers1 = Eq(*map(sympify, pers1_input.split("=")))
-    pers2 = Eq(*map(sympify, pers2_input.split("=")))
-
-    # Menyelesaikan sistem persamaan
-    solusi = solve((pers1, pers2), (x, y), dict=True)
-
-    st.subheader("📌 Solusi SPLDV:")
-    if solusi:
-        # Menampilkan solusi tunggal jika ada
-        st.success(f"x = {solusi[0][x]}, y = {solusi[0][y]}")
-        jenis = "Satu solusi (garis berpotongan)"
-    else:
-        # Menentukan jenis solusi (tak hingga atau tidak ada) jika tidak ada solusi tunggal
-        # Untuk menentukan jenis, kita perlu menganalisis koefisien dan konstanta
-        # Mengambil koefisien dan konstanta dari kedua persamaan
-        # Bentuk umum Ax + By + C = 0
-        # Jadi, dari Eq(LHS, RHS), kita ubah menjadi LHS - RHS = 0
-        # A = coeff(x), B = coeff(y), C = -RHS
-        koef1_x = pers1.lhs.coeff(x)
-        koef1_y = pers1.lhs.coeff(y)
-        konst1 = -pers1.rhs
-
-        koef2_x = pers2.lhs.coeff(x)
-        koef2_y = pers2.lhs.coeff(y)
-        konst2 = -pers2.rhs
-
-        # Menghindari ZeroDivisionError
-        # Cek apakah rasio koefisien sama
-        # a1/a2 = b1/b2 = c1/c2 -> tak hingga solusi (berhimpit)
-        # a1/a2 = b1/b2 != c1/c2 -> tidak ada solusi (sejajar)
-        
-        # Menggunakan epsilon untuk perbandingan float
-        epsilon = 1e-9
-
-        rasio_x = koef1_x / koef2_x if koef2_x != 0 else None
-        rasio_y = koef1_y / koef2_y if koef2_y != 0 else None
-        rasio_konst = konst1 / konst2 if konst2 != 0 else None
-
-        # Handle kasus di mana salah satu koefisien adalah nol
-        # Misalnya, persamaan seperti y = 5 atau x = 3
-        
-        is_parallel_coeffs = False
-        is_same_line = False
-
-        if rasio_x is not None and rasio_y is not None:
-            if abs(rasio_x - rasio_y) < epsilon:
-                is_parallel_coeffs = True
-                if rasio_konst is not None and abs(rasio_x - rasio_konst) < epsilon:
-                    is_same_line = True
-        elif (koef2_x == 0 and koef1_x == 0) and (koef2_y != 0 and koef1_y != 0): # Kedua garis vertikal
-            if abs(koef1_y / koef2_y - konst1 / konst2) < epsilon:
-                is_same_line = True
-            is_parallel_coeffs = True # Keduanya vertikal, jadi sejajar
-        elif (koef2_y == 0 and koef1_y == 0) and (koef2_x != 0 and koef1_x != 0): # Kedua garis horizontal
-            if abs(koef1_x / koef2_x - konst1 / konst2) < epsilon:
-                is_same_line = True
-            is_parallel_coeffs = True # Keduanya horizontal, jadi sejajar
-
-        if is_same_line:
-            jenis = "Tak hingga solusi (garis berhimpit)"
-        elif is_parallel_coeffs and not is_same_line:
-            jenis = "Tidak ada solusi (garis sejajar)"
-        else:
-            jenis = "Tidak diketahui (kemungkinan ada kesalahan input atau kasus khusus)"
-            
-        st.warning("SPLDV tidak memiliki solusi tunggal.")
-
-    st.write(f"**Jenis solusi:** {jenis}")
-
-    st.info("Visualisasi grafik tidak tersedia karena `matplotlib` telah dihapus dari kode.")
-
-except Exception as e:
-    # Menangani kesalahan yang mungkin terjadi selama eksekusi
-    st.error(f"Terjadi kesalahan: {e}")
-    st.error("Pastikan format persamaan benar, contoh: `2*x + 3*y - 6 = 0`.")
-import streamlit as st
-import numpy as np
+# virtual_lab.py
 import matplotlib.pyplot as plt
-from sympy import symbols, Eq, solve, sympify
+import numpy as np
+import tkinter as tk
+from tkinter import ttk
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
-st.set_page_config(page_title="Kalkulator SPLDV", layout="centered")
-st.title("📊 Kalkulator SPLDV dengan Grafik Interaktif")
-st.write("Masukkan dua persamaan linear dua variabel dalam bentuk seperti `2*x + 3*y - 6 = 0`")
+class SPLDVLab:
+    def __init__(self, master):
+        self.fig, self.ax = plt.subplots(figsize=(6, 6)) # Ukuran plot lebih baik
+        self.ax.set_xlabel("x")
+        self.ax.set_ylabel("y")
+        self.ax.axvline(0, color='gray', linestyle='--')
+        self.ax.axhline(0, color='gray', linestyle='--')
+        self.ax.grid(True)
+        self.ax.set_xlim(-10, 10)
+        self.ax.set_ylim(-10, 10)
+        self.ax.set_aspect('equal', adjustable='box') # Pastikan skala sumbu sama
+        self.line1, = self.ax.plot([], [], label='Persamaan 1', color='blue', linewidth=2)
+        self.line2, = self.ax.plot([], [], label='Persamaan 2', color='red', linewidth=2)
+        self.intersection_point, = self.ax.plot([], [], 'o', color='green', markersize=10, label='Solusi')
+        self.ax.legend()
 
-# Input pengguna
-pers1_input = st.text_input("Persamaan 1", value="2*x + 3*y - 6 = 0")
-pers2_input = st.text_input("Persamaan 2", value="x - y - 1 = 0")
+        self.canvas = FigureCanvasTkAgg(self.fig, master=master)
+        self.canvas_widget = self.canvas.get_tk_widget()
+        self.canvas_widget.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
 
-x, y = symbols('x y')
+        self.status_label = ttk.Label(master, text="Status: Masukkan koefisien di bawah")
+        self.status_label.pack(pady=5)
 
-try:
-    pers1 = Eq(*map(sympify, pers1_input.split("=")))
-    pers2 = Eq(*map(sympify, pers2_input.split("=")))
+    def plot_equation(self, a, b, c, line):
+        x_min, x_max = self.ax.get_xlim()
+        y_min, y_max = self.ax.get_ylim()
 
-    solusi = solve((pers1, pers2), (x, y), dict=True)
-
-    st.subheader("📌 Solusi SPLDV:")
-    if solusi:
-        st.success(f"x = {solusi[0][x]}, y = {solusi[0][y]}")
-        titik_potong = (float(solusi[0][x]), float(solusi[0][y]))
-        jenis = "Satu solusi (garis berpotongan)"
-    else:
-        koef1 = [pers1.lhs.coeff(x), pers1.lhs.coeff(y), -pers1.rhs]
-        koef2 = [pers2.lhs.coeff(x), pers2.lhs.coeff(y), -pers2.rhs]
-        rasio = [k1/k2 if k2 != 0 else None for k1, k2 in zip(koef1, koef2)]
-        if rasio[0] == rasio[1] == rasio[2]:
-            jenis = "Tak hingga solusi (garis berhimpit)"
-        elif rasio[0] == rasio[1] and rasio[2] != rasio[1]:
-            jenis = "Tidak ada solusi (garis sejajar)"
+        if b == 0:
+            if a != 0:
+                # Garis vertikal: ax = c => x = c/a
+                x_val = c / a
+                # Gambar dari y_min ke y_max untuk mencakup seluruh area plot
+                line.set_data([x_val, x_val], [y_min, y_max])
+            else: # a=0, b=0: tidak valid atau tak hingga solusi (bukan garis tunggal)
+                line.set_data([], [])
         else:
-            jenis = "Tidak diketahui"
-        st.warning("SPLDV tidak memiliki solusi tunggal.")
-        titik_potong = None
+            # y = (c - ax) / b
+            x_vals = np.linspace(x_min, x_max, 500)
+            y_vals = (c - a * x_vals) / b
+            
+            # Hanya tampilkan bagian garis yang ada di dalam batas plot
+            valid_indices = np.where((y_vals >= y_min) & (y_vals <= y_max))
+            line.set_data(x_vals[valid_indices], y_vals[valid_indices])
+        
+        self.canvas.draw_idle()
 
-    st.write(f"**Jenis solusi:** {jenis}")
-
-    st.subheader("📉 Visualisasi Grafik")
-    fig, ax = plt.subplots()
-    x_vals = np.linspace(-10, 10, 400)
-
-    def garis_y(expr):
-        solved_y = solve(expr, y)
-        if solved_y:
-            return [float(s.evalf(subs={x: val})) for val in x_vals]
+    def find_intersection(self, a1, b1, c1, a2, b2, c2):
+        det = a1 * b2 - a2 * b1
+        
+        if det == 0:
+            # Garis sejajar atau berimpit
+            # Periksa apakah mereka berimpit (solusi tak hingga)
+            # Jika a1/a2 = b1/b2 = c1/c2 (dengan asumsi a2,b2,c2 tidak nol)
+            # Atau periksa konsistensi menggunakan determinan minor
+            
+            # Untuk kasus sejajar/berimpit, gunakan metode pemeriksaan konsistensi
+            # Jika a1,b1,c1 dan a2,b2,c2 proporsional, maka berimpit
+            # (a1/a2 = b1/b2 = c1/c2) --> cek silang: a1*b2 = a2*b1, a1*c2 = a2*c1, b1*c2 = b2*c1
+            
+            # Penanganan kasus khusus: semua koefisien nol
+            if (a1 == 0 and b1 == 0 and c1 == 0) and (a2 == 0 and b2 == 0 and c2 == 0):
+                 return "Infinite Solutions" # Kedua persamaan 0=0
+            
+            # Jika determinan nol, periksa apakah mereka konsisten (berimpit)
+            # Caranya: Ambil satu titik dari garis pertama, cek apakah memenuhi garis kedua
+            # Atau lebih robust: cek proporsionalitas
+            is_consistent = False
+            # Menghindari ZeroDivisionError
+            if (a1 == 0 and b1 == 0 and c1 != 0) or \
+               (a2 == 0 and b2 == 0 and c2 != 0):
+                # Salah satu persamaan menyatakan 0 = non-nol (tidak konsisten)
+                is_consistent = False
+            elif det == 0: # Ini sudah ditangani di awal, tapi pastikan
+                # Jika sejajar, cek apakah mereka konsisten (berimpit)
+                # Contoh: x+y=1, 2x+2y=2 (berimpit) vs x+y=1, 2x+2y=3 (sejajar, tidak ada solusi)
+                # Cek jika a1*c2 == a2*c1 dan b1*c2 == b2*c1
+                # Ini adalah cek apakah matriks augmentasinya memiliki rank yang sama dengan matriks koefisien
+                # atau jika barisnya proporsional
+                if (a1 * c2 == a2 * c1 and b1 * c2 == b2 * c1) or \
+                   (a1 == 0 and a2 == 0 and b1 * c2 == b2 * c1) or \
+                   (b1 == 0 and b2 == 0 and a1 * c2 == a2 * c1):
+                    # Jika a1, b1, a2, b2 semuanya nol, ini kasus 0=c1 dan 0=c2
+                    if a1 == 0 and b1 == 0 and a2 == 0 and b2 == 0:
+                        if c1 == c2: return "Infinite Solutions"
+                        else: return "No Solution"
+                    is_consistent = True
+                
+            if is_consistent:
+                return "Infinite Solutions"
+            else:
+                return "No Solution"
         else:
-            return [None] * len(x_vals)
+            x = (c1 * b2 - c2 * b1) / det
+            y = (a1 * c2 - a2 * c1) / det
+            return x, y
 
-    y1_vals = garis_y(pers1)
-    y2_vals = garis_y(pers2)
+    def update_plot(self, a1, b1, c1, a2, b2, c2):
+        self.plot_equation(a1, b1, c1, self.line1)
+        self.plot_equation(a2, b2, c2, self.line2)
 
-    ax.plot(x_vals, y1_vals, label='Persamaan 1', color='blue')
-    ax.plot(x_vals, y2_vals, label='Persamaan 2', color='green')
+        solution = self.find_intersection(a1, b1, c1, a2, b2, c2)
+        if isinstance(solution, tuple):
+            x_sol, y_sol = solution
+            # Filter agar titik solusi hanya muncul jika di dalam rentang plot
+            x_min, x_max = self.ax.get_xlim()
+            y_min, y_max = self.ax.get_ylim()
+            if x_min <= x_sol <= x_max and y_min <= y_sol <= y_max:
+                self.intersection_point.set_data([x_sol], [y_sol])
+                self.status_label.config(text=f"Solusi Unik: x = {x_sol:.2f}, y = {y_sol:.2f}")
+            else:
+                self.intersection_point.set_data([], [])
+                self.status_label.config(text=f"Solusi Unik (di luar area grafik): x = {x_sol:.2f}, y = {y_sol:.2f}")
+        else:
+            self.intersection_point.set_data([], [])
+            self.status_label.config(text=f"Status: {solution}")
+        
+        self.canvas.draw_idle()
 
-    if titik_potong:
-        ax.plot(*titik_potong, 'ro', label='Titik Potong')
 
-    ax.axhline(0, color='black', linewidth=0.5)
-    ax.axvline(0, color='black', linewidth=0.5)
-    ax.grid(True)
-    ax.legend()
-    ax.set_xlabel("x")
-    ax.set_ylabel("y")
-    ax.set_title("Grafik SPLDV")
+def create_gui():
+    root = tk.Tk()
+    root.title("Virtual Lab SPLDV Interaktif")
+    root.geometry("800x700") # Ukuran jendela awal
 
-    st.pyplot(fig)
+    lab = SPLDVLab(root)
 
-except Exception as e:
-    st.error(f"Terjadi kesalahan: {e}")
+    # Fungsi untuk mendapatkan nilai dari slider/entry dan update plot
+    def update_from_gui(*args): # *args agar bisa dipanggil oleh scale event
+        try:
+            a1 = float(slider_a1.get())
+            b1 = float(slider_b1.get())
+            c1 = float(slider_c1.get())
+            a2 = float(slider_a2.get())
+            b2 = float(slider_b2.get())
+            c2 = float(slider_c2.get())
+            lab.update_plot(a1, b1, c1, a2, b2, c2)
+        except ValueError:
+            lab.status_label.config(text="Input tidak valid! Pastikan semua adalah angka.")
+
+    # --- Frame Kontrol ---
+    control_frame = ttk.Frame(root)
+    control_frame.pack(side=tk.BOTTOM, fill=tk.X, padx=10, pady=10)
+
+    # Frame untuk Persamaan 1
+    frame1 = ttk.LabelFrame(control_frame, text="Persamaan 1 (a₁x + b₁y = c₁)")
+    frame1.grid(row=0, column=0, padx=5, pady=5, sticky="ew")
+
+    tk.Label(frame1, text="a₁:").grid(row=0, column=0, padx=5, pady=2)
+    slider_a1 = ttk.Scale(frame1, from_=-5, to=5, orient="horizontal", command=update_from_gui)
+    slider_a1.set(1) # Default value
+    slider_a1.grid(row=0, column=1, padx=5, pady=2, sticky="ew")
+
+    tk.Label(frame1, text="b₁:").grid(row=1, column=0, padx=5, pady=2)
+    slider_b1 = ttk.Scale(frame1, from_=-5, to=5, orient="horizontal", command=update_from_gui)
+    slider_b1.set(-1) # Default value
+    slider_b1.grid(row=1, column=1, padx=5, pady=2, sticky="ew")
+
+    tk.Label(frame1, text="c₁:").grid(row=2, column=0, padx=5, pady=2)
+    slider_c1 = ttk.Scale(frame1, from_=-5, to=5, orient="horizontal", command=update_from_gui)
+    slider_c1.set(0) # Default value
+    slider_c1.grid(row=2, column=1, padx=5, pady=2, sticky="ew")
+
+    frame1.grid_columnconfigure(1, weight=1) # Membuat slider melebar
+
+    # Frame untuk Persamaan 2
+    frame2 = ttk.LabelFrame(control_frame, text="Persamaan 2 (a₂x + b₂y = c₂)")
+    frame2.grid(row=0, column=1, padx=5, pady=5, sticky="ew")
+
+    tk.Label(frame2, text="a₂:").grid(row=0, column=0, padx=5, pady=2)
+    slider_a2 = ttk.Scale(frame2, from_=-5, to=5, orient="horizontal", command=update_from_gui)
+    slider_a2.set(1) # Default value
+    slider_a2.grid(row=0, column=1, padx=5, pady=2, sticky="ew")
+
+    tk.Label(frame2, text="b₂:").grid(row=1, column=0, padx=5, pady=2)
+    slider_b2 = ttk.Scale(frame2, from_=-5, to=5, orient="horizontal", command=update_from_gui)
+    slider_b2.set(1) # Default value
+    slider_b2.grid(row=1, column=1, padx=5, pady=2, sticky="ew")
+
+    tk.Label(frame2, text="c₂:").grid(row=2, column=0, padx=5, pady=2)
+    slider_c2 = ttk.Scale(frame2, from_=-5, to=5, orient="horizontal", command=update_from_gui)
+    slider_c2.set(2) # Default value
+    slider_c2.grid(row=2, column=1, padx=5, pady=2, sticky="ew")
+
+    frame2.grid_columnconfigure(1, weight=1) # Membuat slider melebar
+
+    control_frame.grid_columnconfigure(0, weight=1)
+    control_frame.grid_columnconfigure(1, weight=1)
+
+    # Inisialisasi plot awal
+    update_from_gui()
+
+    root.mainloop()
+
+if __name__ == "__main__":
+    create_gui()
