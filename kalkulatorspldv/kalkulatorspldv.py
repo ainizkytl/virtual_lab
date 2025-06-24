@@ -251,7 +251,6 @@ Setelah menemukan salah satu variabel ($x$ atau $y$), sekarang saatnya mencari n
 **Apa itu Substitusi?**
 Substitusi berarti **mengganti** nilai variabel yang sudah diketahui ke dalam salah satu persamaan awal. Dengan begitu, kita bisa menyelesaikan persamaan untuk variabel yang tersisa.
 
-""")
 
 # Check if x or y was found in the previous step
 found_x = st.session_state.get('found_x')
