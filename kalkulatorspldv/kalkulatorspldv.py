@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import time # Untuk simulasi loading/animasi
 
-# --- Fungsi-fungsi Utama ---
+# --- Fungsi-fungsi Utama (tidak banyak berubah) ---
 
 def hitung_y(persamaan, x_val):
     """
@@ -12,7 +12,6 @@ def hitung_y(persamaan, x_val):
     """
     a, b, c = persamaan
     if b == 0:
-        # Untuk garis vertikal, y tidak terdefinisi unik, kembalikan array inf/nan
         return np.full_like(x_val, np.nan) # Mengembalikan NaN untuk y jika b=0
     return (c - a * x_val) / b
 
@@ -66,14 +65,8 @@ def plot_garis(persamaan1, persamaan2, x_range, color1, color2, point_x=None, po
         if valid_y2.size > 0: all_y_vals.extend(valid_y2)
 
     if all_y_vals:
-        # Filter out extreme values for better scaling
-        y_filtered = [y for y in all_y_vals if -1000 < y < 1000] # Batasi agar tidak terlalu ekstrim
-        if y_filtered:
-            min_y = np.min(y_filtered) - 1.5
-            max_y = np.max(y_filtered) + 1.5
-        else: # Fallback if all values are extreme
-            min_y, max_y = -10, 10 # Default range
-
+        min_y = np.min(all_y_vals) - 1.5
+        max_y = np.max(all_y_vals) + 1.5
         # Prevent very narrow or inverted Y limits
         if max_y - min_y < 5:
             mid_y = (min_y + max_y) / 2
@@ -111,14 +104,11 @@ def hitung_solusi_spldv(persamaan1, persamaan2):
 st.set_page_config(
     layout="wide",
     page_title="Kalkulator SPLDV Interaktif",
-    initial_sidebar_state="expanded", # Sidebar dibuka secara default
-    icon="✨" # Menambahkan ikon di tab browser
+    initial_sidebar_state="expanded" # Sidebar dibuka secara default
 )
 
 # --- Sidebar ---
 with st.sidebar:
-    # Anda bisa menyimpan gambar ini di folder yang sama dengan script Anda, misal: icons/graph_icon.png
-    # atau jika ada di cloud, pastikan linknya stabil
     st.image("https://www.freeiconspng.com/uploads/graph-icon-png-1.png", width=100) # Ikon menarik
     st.header("Pengaturan Aplikasi")
     st.markdown("""
@@ -128,13 +118,12 @@ with st.sidebar:
     """)
 
     st.subheader("Pengaturan Tampilan Garis")
-    line1_color = st.color_picker("Warna Garis 1", "#4CAF50", key="color1_picker") # Hijau
-    line2_color = st.color_picker("Warna Garis 2", "#FF5733", key="color2_picker") # Oranye
+    line1_color = st.color_picker("Warna Garis 1", "#4CAF50") # Hijau
+    line2_color = st.color_picker("Warna Garis 2", "#FF5733") # Oranye
 
     st.markdown("---")
     st.write("Dibuat dengan ❤️ oleh Mahasiswa/i") # Footer di sidebar
-    st.markdown("[[Nama Universitas Anda]]") # Placeholder yang lebih jelas
-    if st.button("Reset Aplikasi", help="Mulai ulang aplikasi dengan nilai default"):
+    if st.button("Reset Aplikasi"):
         st.experimental_rerun()
 
 # --- Judul dan Deskripsi Utama ---
@@ -144,7 +133,6 @@ st.markdown("""
     dengan **eksplorasi interaktif** dan **visualisasi grafis** yang menawan.
     Ikuti langkah-langkah di bawah ini!
 """)
-st.write("---") # Garis pemisah visual
 
 # --- Bagian Input Persamaan ---
 st.header("1. Masukkan Persamaan Anda")
@@ -170,19 +158,12 @@ persamaan1 = (a1, b1, c1)
 persamaan2 = (a2, b2, c2)
 
 # Validasi awal
-# Menggunakan if-else untuk error agar tidak st.stop() berlebihan
-input_valid = True
 if (b1 == 0 and a1 == 0):
     st.error("🚨 Kesalahan: Koefisien 'a1' dan 'b1' tidak boleh keduanya nol untuk Persamaan 1. Harap perbaiki input Anda.")
-    input_valid = False
+    st.stop()
 if (b2 == 0 and a2 == 0):
     st.error("🚨 Kesalahan: Koefisien 'a2' dan 'b2' tidak boleh keduanya nol untuk Persamaan 2. Harap perbaiki input Anda.")
-    input_valid = False
-
-if not input_valid:
-    st.stop() # Hentikan eksekusi jika input tidak valid
-
-st.write("---") # Garis pemisah visual
+    st.stop()
 
 # --- Bagian Discovery Learning ---
 st.header("2. Temukan Titik Potong dengan Eksplorasi!")
@@ -195,7 +176,7 @@ st.markdown("""
 x_coba = st.slider("➡️ Geser Nilai X Coba:", min_value=-10.0, max_value=10.0, value=0.0, step=0.1,
                    help="Geser slider ini untuk mencoba berbagai nilai X.")
 
-with st.spinner('🚀 Menghitung nilai Y dan memperbarui grafik...'):
+with st.spinner('Menghitung nilai Y...'):
     y1_coba_raw = hitung_y(persamaan1, np.array([x_coba]))[0]
     y2_coba_raw = hitung_y(persamaan2, np.array([x_coba]))[0]
     time.sleep(0.1) # Sedikit delay untuk melihat spinner
@@ -209,7 +190,7 @@ with col_res1:
         if a1 != 0:
             st.code(f"Persamaan 1: x = {c1/a1:.2f} (Garis Vertikal)")
         else:
-            st.error("Persamaan 1 tidak valid.") # Seharusnya tidak tercapai
+            st.error("Persamaan 1 tidak valid.")
     else:
         st.metric(label="Y1 (dari Persamaan 1)", value=f"{y1_coba_raw:.4f}")
 
@@ -218,13 +199,13 @@ with col_res2:
         if a2 != 0:
             st.code(f"Persamaan 2: x = {c2/a2:.2f} (Garis Vertikal)")
         else:
-            st.error("Persamaan 2 tidak valid.") # Seharusnya tidak tercapai
+            st.error("Persamaan 2 tidak valid.")
     else:
         st.metric(label="Y2 (dari Persamaan 2)", value=f"{y2_coba_raw:.4f}")
 
 with col_diff:
     tolerance = 0.05 # Toleransi untuk dianggap "sama"
-    diff_y = abs(y1_coba_raw - y2_coba_raw) if (b1 != 0 and b2 != 0) and not (np.isnan(y1_coba_raw) or np.isnan(y2_coba_raw)) else float('inf')
+    diff_y = abs(y1_coba_raw - y2_coba_raw) if b1 != 0 and b2 != 0 else float('inf')
 
     if b1 != 0 and b2 != 0:
         if diff_y < tolerance:
@@ -232,7 +213,7 @@ with col_diff:
         else:
             st.metric(label="Perbedaan |Y1 - Y2|", value=f"{diff_y:.4f}", delta="Perlu disesuaikan", delta_color="inverse")
     else:
-        st.info("ℹ️ Perbedaan Y tidak relevan untuk garis vertikal.")
+        st.markdown("Perbedaan Y tidak relevan untuk garis vertikal.")
 
 
 # Umpan Balik / Petunjuk
@@ -273,8 +254,6 @@ elif b2 == 0 and a2 != 0: # Persamaan 2 vertikal, Persamaan 1 non-vertikal
     is_solution_found_by_discovery = True
 
 
-st.write("---") # Garis pemisah visual
-
 # --- Bagian Visualisasi ---
 st.header("3. Visualisasi Grafik")
 st.markdown("Perhatikan bagaimana kedua garis berinteraksi saat Anda mengubah nilai X.")
@@ -284,17 +263,25 @@ x_range = np.linspace(-10, 10, 400) # Range X untuk plotting
 plot_x_marker = x_coba
 plot_y_marker = None
 
-# Logika penentuan plot_x_marker dan plot_y_marker untuk titik coba
+# Logika penentuan plot_x_marker dan plot_y_marker
 if b1 == 0 and a1 != 0: # Persamaan 1 vertikal
     plot_x_marker = c1 / a1
     if b2 != 0: # Jika P2 non-vertikal
         plot_y_marker = hitung_y(persamaan2, np.array([plot_x_marker]))[0]
+    # Jika P2 juga vertikal, plot_y_marker tetap None
 elif b2 == 0 and a2 != 0: # Persamaan 2 vertikal
     plot_x_marker = c2 / a2
     if b1 != 0: # Jika P1 non-vertikal
         plot_y_marker = hitung_y(persamaan1, np.array([plot_x_marker]))[0]
+    # Jika P1 juga vertikal, plot_y_marker tetap None
 else: # Kedua garis non-vertikal
-    plot_y_marker = (y1_coba_raw + y2_coba_raw) / 2 # Plot titik tengah di x_coba
+    if abs(y1_coba_raw - y2_coba_raw) < tolerance: # Jika sudah dekat
+        plot_y_marker = (y1_coba_raw + y2_coba_raw) / 2
+    else: # Jika belum dekat, plot di titik coba x
+        # Untuk visualisasi, kita bisa plot kedua titik y saat ini
+        # Namun, plot_garis hanya mendukung 1 titik marker.
+        # Kita akan plot titik tengah antara y1_coba_raw dan y2_coba_raw di x_coba
+        plot_y_marker = (y1_coba_raw + y2_coba_raw) / 2
 
 # Pastikan plot_y_marker bukan NaN atau Inf
 if plot_y_marker is not None and (np.isnan(plot_y_marker) or np.isinf(plot_y_marker)):
@@ -308,8 +295,6 @@ fig = plot_garis(persamaan1, persamaan2, x_range, line1_color, line2_color,
 st.pyplot(fig)
 st.caption("Titik ungu pada grafik menunjukkan perkiraan titik potong berdasarkan nilai X coba Anda.")
 
-
-st.write("---") # Garis pemisah visual
 
 # --- Bagian Solusi Matematis (untuk konfirmasi) ---
 st.header("4. Konfirmasi Solusi Matematis (Opsional)")
@@ -335,6 +320,6 @@ with st.expander("Klik untuk Menampilkan Solusi Matematis"):
     else:
         st.error("❌ Tidak ada solusi unik. Kedua garis **paralel** dan tidak berpotongan.")
 
-st.write("---") # Garis pemisah visual
-st.markdown("Dibuat dengan ❤️ Python oleh **rarayuniaini** | Universitas [Ganti dengan Nama Universitas Anda]")
+st.markdown("---")
+st.markdown("Dibuat dengan Python oleh **rarayuniaini** | Universitas Pekalongan")
 st.markdown("---")
