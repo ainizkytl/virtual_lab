@@ -111,7 +111,7 @@ st.set_page_config(
     layout="wide",
     page_title="Kalkulator SPLDV Interaktif",
     initial_sidebar_state="expanded", # Sidebar dibuka secara default
-    icon="✨" # Menambahkan ikon di tab browser
+    icon="📊" # Contoh emoji alternatif, seperti grafik
 )
 
 # --- Sidebar ---
@@ -129,7 +129,7 @@ with st.sidebar:
     line2_color = st.color_picker("Warna Garis 2", "#FF5733", key="color2_picker") # Oranye
 
     st.markdown("---")
-    st.write("Dibuat dengan ❤️ oleh rarayuniaini") # Footer di sidebar
+    st.markdown("Dibuat dengan oleh rarayuniaini")
     st.markdown("[[Ganti dengan Nama Universitas Anda]]") # Placeholder yang lebih jelas
     if st.button("Reset Aplikasi", help="Mulai ulang aplikasi dengan nilai default"):
         st.experimental_rerun()
