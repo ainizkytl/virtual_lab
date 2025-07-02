@@ -1,202 +1,177 @@
-# virtual_lab.py
-import matplotlib.pyplot as plt
-import numpy as np
-import tkinter as tk
-from tkinter import ttk
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+import streamlit as st
 
-class SPLDVLab:
-    def __init__(self, master):
-        self.fig, self.ax = plt.subplots(figsize=(6, 6)) # Ukuran plot lebih baik
-        self.ax.set_xlabel("x")
-        self.ax.set_ylabel("y")
-        self.ax.axvline(0, color='gray', linestyle='--')
-        self.ax.axhline(0, color='gray', linestyle='--')
-        self.ax.grid(True)
-        self.ax.set_xlim(-10, 10)
-        self.ax.set_ylim(-10, 10)
-        self.ax.set_aspect('equal', adjustable='box') # Pastikan skala sumbu sama
-        self.line1, = self.ax.plot([], [], label='Persamaan 1', color='blue', linewidth=2)
-        self.line2, = self.ax.plot([], [], label='Persamaan 2', color='red', linewidth=2)
-        self.intersection_point, = self.ax.plot([], [], 'o', color='green', markersize=10, label='Solusi')
-        self.ax.legend()
+def solve_spldv_substitusi_streamlit(a1, b1, c1, a2, b2, c2):
+    st.markdown("### Memulai Perhitungan")
+    st.info(f"Persamaan 1: **{a1}x + {b1}y = {c1}**")
+    st.info(f"Persamaan 2: **{a2}x + {b2}y = {c2}**")
 
-        self.canvas = FigureCanvasTkAgg(self.fig, master=master)
-        self.canvas_widget = self.canvas.get_tk_widget()
-        self.canvas_widget.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+    st.markdown("---")
+    st.markdown("### Langkah 1: Ubah salah satu persamaan")
+    st.write("Kita akan mencoba mengubah Persamaan 1 untuk menyatakan `x` dalam bentuk `y`.")
 
-        self.status_label = ttk.Label(master, text="Status: Masukkan koefisien di bawah")
-        self.status_label.pack(pady=5)
+    substitute_var = ''
+    m_val = 0
+    c_val = 0
 
-    def plot_equation(self, a, b, c, line):
-        x_min, x_max = self.ax.get_xlim()
-        y_min, y_max = self.ax.get_ylim()
+    if a1 == 0:
+        st.warning("Koefisien A1 adalah 0. Tidak bisa menyatakan x dari Persamaan 1 dengan mudah.")
+        st.write("Mari kita coba menyatakan `y` dari Persamaan 1: $y = (c_1 - a_1x) / b_1$")
+        if b1 == 0:
+            st.error("Kedua koefisien A1 dan B1 adalah 0. Persamaan 1 tidak valid sebagai persamaan linear.")
+            st.error("Tidak dapat melanjutkan. Harap periksa input Anda.")
+            return None, None # Mengembalikan None jika tidak bisa dilanjutkan
 
-        if b == 0:
-            if a != 0:
-                # Garis vertikal: ax = c => x = c/a
-                x_val = c / a
-                # Gambar dari y_min ke y_max untuk mencakup seluruh area plot
-                line.set_data([x_val, x_val], [y_min, y_max])
-            else: # a=0, b=0: tidak valid atau tak hingga solusi (bukan garis tunggal)
-                line.set_data([], [])
+        substitute_var = 'y'
+        m_val = -a1 / b1
+        c_val = c1 / b1
+        st.code(f"y = ({c1} - {a1}x) / {b1}")
+        st.success(f"Jadi, y = {m_val:.2f}x + {c_val:.2f}")
+
+    else:
+        substitute_var = 'x'
+        m_val = -b1 / a1
+        c_val = c1 / a1
+        st.code(f"x = ({c1} - {b1}y) / {a1}")
+        st.success(f"Jadi, x = {m_val:.2f}y + {c_val:.2f}")
+
+    st.markdown("---")
+    st.markdown("### Langkah 2 & 3: Substitusi dan Selesaikan")
+    st.write(f"Sekarang, kita akan substitusikan ekspresi untuk **{substitute_var}** ke Persamaan 2.")
+
+    x_solution = None
+    y_solution = None
+
+    if substitute_var == 'x':
+        # Substitusi x = (c1 - b1*y) / a1 ke a2*x + b2*y = c2
+        # a2 * ((c1 - b1*y) / a1) + b2*y = c2
+        # y * (b2 - (a2*b1 / a1)) = c2 - (a2*c1 / a1)
+        denominator = (b2 * a1 - a2 * b1)
+        if abs(denominator) < 1e-9: # Mendekati nol untuk floating point
+            st.error("Determinan sistem mendekati nol. Sistem ini mungkin tidak memiliki solusi unik (sejajar atau berhimpit).")
+            return None, None
+
+        numerator_y = (c2 * a1 - a2 * c1)
+        y_solution = numerator_y / denominator
+        st.markdown(f"""
+        Setelah substitusi $x = \\frac{{{c1} - {b1}y}}{{{a1}}}$ ke persamaan 2:
+        $ {a2} \\left( \\frac{{{c1} - {b1}y}}{{{a1}}} \\right) + {b2}y = {c2} $
+        """)
+        st.code(f"y * ({b2} * {a1} - {a2} * {b1}) = ({c2} * {a1} - {a2} * {c1})")
+        st.code(f"y * ({denominator:.2f}) = ({numerator_y:.2f})")
+        st.success(f"Maka, **y = {y_solution:.2f}**")
+        x_solution = (c1 - b1 * y_solution) / a1
+
+    else: # substitute_var == 'y'
+        # Substitusi y = (c1 - a1*x) / b1 ke a2*x + b2*y = c2
+        # a2*x + b2 * ((c1 - a1*x) / b1) = c2
+        # x * (a2 - (b2*a1 / b1)) = c2 - (b2*c1 / b1)
+        denominator = (a2 * b1 - b2 * a1)
+        if abs(denominator) < 1e-9: # Mendekati nol untuk floating point
+            st.error("Determinan sistem mendekati nol. Sistem ini mungkin tidak memiliki solusi unik (sejajar atau berhimpit).")
+            return None, None
+
+        numerator_x = (c2 * b1 - b2 * c1)
+        x_solution = numerator_x / denominator
+        st.markdown(f"""
+        Setelah substitusi $y = \\frac{{{c1} - {a1}x}}{{{b1}}}$ ke persamaan 2:
+        $ {a2}x + {b2} \\left( \\frac{{{c1} - {a1}x}}{{{b1}}} \\right) = {c2} $
+        """)
+        st.code(f"x * ({a2} * {b1} - {b2} * {a1}) = ({c2} * {b1} - {b2} * {c1})")
+        st.code(f"x * ({denominator:.2f}) = ({numerator_x:.2f})")
+        st.success(f"Maka, **x = {x_solution:.2f}**")
+        y_solution = (c1 - a1 * x_solution) / b1
+
+    st.markdown("---")
+    st.markdown("### Langkah 4: Substitusi Balik")
+    st.write(f"Setelah kita menemukan {'y' if substitute_var == 'x' else 'x'} = { (y_solution if substitute_var == 'x' else x_solution):.2f},")
+    st.write("kita akan substitusikan nilai ini kembali ke Persamaan 1 untuk menemukan nilai variabel yang tersisa.")
+
+    if substitute_var == 'x':
+        if abs(b1) < 1e-9:
+            st.error("Koefisien B1 adalah 0. Tidak dapat menemukan y dari Persamaan 1.")
+            return None, None
+        calculated_y = (c1 - (a1 * x_solution)) / b1
+        st.code(f"{a1} * {x_solution:.2f} + {b1}y = {c1}")
+        st.code(f"{a1 * x_solution:.2f} + {b1}y = {c1}")
+        st.code(f"{b1}y = {c1} - {a1 * x_solution:.2f}")
+        st.code(f"{b1}y = {c1 - (a1 * x_solution):.2f}")
+        st.code(f"y = {(c1 - (a1 * x_solution)):.2f} / {b1:.2f}")
+        st.success(f"Didapatkan **y = {calculated_y:.2f}**")
+        y_final = calculated_y
+        x_final = x_solution
+    else: # substitute_var == 'y'
+        if abs(a1) < 1e-9:
+            st.error("Koefisien A1 adalah 0. Tidak dapat menemukan x dari Persamaan 1.")
+            return None, None
+        calculated_x = (c1 - (b1 * y_solution)) / a1
+        st.code(f"{a1}x + {b1} * {y_solution:.2f} = {c1}")
+        st.code(f"{a1}x + {b1 * y_solution:.2f} = {c1}")
+        st.code(f"{a1}x = {c1} - {b1 * y_solution:.2f}")
+        st.code(f"{a1}x = {c1 - (b1 * y_solution):.2f}")
+        st.code(f"x = {(c1 - (b1 * y_solution)):.2f} / {a1:.2f}")
+        st.success(f"Didapatkan **x = {calculated_x:.2f}**")
+        x_final = calculated_x
+        y_final = y_solution
+
+    return x_final, y_final
+
+# --- Tampilan Antarmuka Streamlit ---
+st.set_page_config(
+    page_title="Kalkulator SPLDV Substitusi",
+    page_icon="🔢",
+    layout="centered",
+    initial_sidebar_state="expanded"
+)
+
+st.title("🔢 Kalkulator SPLDV")
+st.subheader("Menyelesaikan Sistem Persamaan Linear Dua Variabel dengan Metode Substitusi")
+
+st.markdown("""
+Aplikasi ini akan memandu Anda menyelesaikan SPLDV (Sistem Persamaan Linear Dua Variabel)
+menggunakan **Metode Substitusi** secara interaktif.
+Masukkan koefisien untuk kedua persamaan Anda dalam format:
+$Ax + By = C$
+""")
+
+st.markdown("---")
+st.markdown("### Masukkan Persamaan Anda")
+
+col1, col2 = st.columns(2)
+
+with col1:
+    st.markdown("#### Persamaan 1 ($A_1x + B_1y = C_1$)")
+    a1 = st.number_input("Koefisien $A_1$", value=2.0, key="a1")
+    b1 = st.number_input("Koefisien $B_1$", value=1.0, key="b1")
+    c1 = st.number_input("Konstanta $C_1$", value=5.0, key="c1")
+
+with col2:
+    st.markdown("#### Persamaan 2 ($A_2x + B_2y = C_2$)")
+    a2 = st.number_input("Koefisien $A_2$", value=3.0, key="a2")
+    b2 = st.number_input("Koefisien $B_2$", value=-2.0, key="b2")
+    c2 = st.number_input("Konstanta $C_2$", value=4.0, key="c2")
+
+st.markdown("---")
+
+if st.button("Hitung Solusi", type="primary"):
+    st.markdown("## Proses Penyelesaian")
+    with st.expander("Lihat Langkah-langkah Detail", expanded=True):
+        x_final, y_final = solve_spldv_substitusi_streamlit(a1, b1, c1, a2, b2, c2)
+
+    if x_final is not None and y_final is not None:
+        st.markdown("---")
+        st.markdown("## 🎉 Solusi Akhir 🎉")
+        st.success(f"Nilai **x = {x_final:.2f}**")
+        st.success(f"Nilai **y = {y_final:.2f}**")
+
+        st.markdown("---")
+        st.markdown("### Verifikasi Solusi")
+        check1 = a1 * x_final + b1 * y_final
+        check2 = a2 * x_final + b2 * y_final
+        st.markdown(f"**Persamaan 1**: `{a1} * {x_final:.2f} + {b1} * {y_final:.2f} = {check1:.2f}` (Seharusnya `{c1:.2f}`)")
+        st.markdown(f"**Persamaan 2**: `{a2} * {x_final:.2f} + {b2} * {y_final:.2f} = {check2:.2f}` (Seharusnya `{c2:.2f}`)")
+
+        if abs(check1 - c1) < 1e-6 and abs(check2 - c2) < 1e-6: # Toleransi kecil untuk floating point
+            st.balloons()
+            st.success("🎉 Solusi Anda TEPAT! 🎉")
         else:
-            # y = (c - ax) / b
-            x_vals = np.linspace(x_min, x_max, 500)
-            y_vals = (c - a * x_vals) / b
-            
-            # Hanya tampilkan bagian garis yang ada di dalam batas plot
-            valid_indices = np.where((y_vals >= y_min) & (y_vals <= y_max))
-            line.set_data(x_vals[valid_indices], y_vals[valid_indices])
-        
-        self.canvas.draw_idle()
-
-    def find_intersection(self, a1, b1, c1, a2, b2, c2):
-        det = a1 * b2 - a2 * b1
-        
-        if det == 0:
-            # Garis sejajar atau berimpit
-            # Periksa apakah mereka berimpit (solusi tak hingga)
-            # Jika a1/a2 = b1/b2 = c1/c2 (dengan asumsi a2,b2,c2 tidak nol)
-            # Atau periksa konsistensi menggunakan determinan minor
-            
-            # Untuk kasus sejajar/berimpit, gunakan metode pemeriksaan konsistensi
-            # Jika a1,b1,c1 dan a2,b2,c2 proporsional, maka berimpit
-            # (a1/a2 = b1/b2 = c1/c2) --> cek silang: a1*b2 = a2*b1, a1*c2 = a2*c1, b1*c2 = b2*c1
-            
-            # Penanganan kasus khusus: semua koefisien nol
-            if (a1 == 0 and b1 == 0 and c1 == 0) and (a2 == 0 and b2 == 0 and c2 == 0):
-                 return "Infinite Solutions" # Kedua persamaan 0=0
-            
-            # Jika determinan nol, periksa apakah mereka konsisten (berimpit)
-            # Caranya: Ambil satu titik dari garis pertama, cek apakah memenuhi garis kedua
-            # Atau lebih robust: cek proporsionalitas
-            is_consistent = False
-            # Menghindari ZeroDivisionError
-            if (a1 == 0 and b1 == 0 and c1 != 0) or \
-               (a2 == 0 and b2 == 0 and c2 != 0):
-                # Salah satu persamaan menyatakan 0 = non-nol (tidak konsisten)
-                is_consistent = False
-            elif det == 0: # Ini sudah ditangani di awal, tapi pastikan
-                # Jika sejajar, cek apakah mereka konsisten (berimpit)
-                # Contoh: x+y=1, 2x+2y=2 (berimpit) vs x+y=1, 2x+2y=3 (sejajar, tidak ada solusi)
-                # Cek jika a1*c2 == a2*c1 dan b1*c2 == b2*c1
-                # Ini adalah cek apakah matriks augmentasinya memiliki rank yang sama dengan matriks koefisien
-                # atau jika barisnya proporsional
-                if (a1 * c2 == a2 * c1 and b1 * c2 == b2 * c1) or \
-                   (a1 == 0 and a2 == 0 and b1 * c2 == b2 * c1) or \
-                   (b1 == 0 and b2 == 0 and a1 * c2 == a2 * c1):
-                    # Jika a1, b1, a2, b2 semuanya nol, ini kasus 0=c1 dan 0=c2
-                    if a1 == 0 and b1 == 0 and a2 == 0 and b2 == 0:
-                        if c1 == c2: return "Infinite Solutions"
-                        else: return "No Solution"
-                    is_consistent = True
-                
-            if is_consistent:
-                return "Infinite Solutions"
-            else:
-                return "No Solution"
-        else:
-            x = (c1 * b2 - c2 * b1) / det
-            y = (a1 * c2 - a2 * c1) / det
-            return x, y
-
-    def update_plot(self, a1, b1, c1, a2, b2, c2):
-        self.plot_equation(a1, b1, c1, self.line1)
-        self.plot_equation(a2, b2, c2, self.line2)
-
-        solution = self.find_intersection(a1, b1, c1, a2, b2, c2)
-        if isinstance(solution, tuple):
-            x_sol, y_sol = solution
-            # Filter agar titik solusi hanya muncul jika di dalam rentang plot
-            x_min, x_max = self.ax.get_xlim()
-            y_min, y_max = self.ax.get_ylim()
-            if x_min <= x_sol <= x_max and y_min <= y_sol <= y_max:
-                self.intersection_point.set_data([x_sol], [y_sol])
-                self.status_label.config(text=f"Solusi Unik: x = {x_sol:.2f}, y = {y_sol:.2f}")
-            else:
-                self.intersection_point.set_data([], [])
-                self.status_label.config(text=f"Solusi Unik (di luar area grafik): x = {x_sol:.2f}, y = {y_sol:.2f}")
-        else:
-            self.intersection_point.set_data([], [])
-            self.status_label.config(text=f"Status: {solution}")
-        
-        self.canvas.draw_idle()
-
-
-def create_gui():
-    root = tk.Tk()
-    root.title("Virtual Lab SPLDV Interaktif")
-    root.geometry("800x700") # Ukuran jendela awal
-
-    lab = SPLDVLab(root)
-
-    # Fungsi untuk mendapatkan nilai dari slider/entry dan update plot
-    def update_from_gui(*args): # *args agar bisa dipanggil oleh scale event
-        try:
-            a1 = float(slider_a1.get())
-            b1 = float(slider_b1.get())
-            c1 = float(slider_c1.get())
-            a2 = float(slider_a2.get())
-            b2 = float(slider_b2.get())
-            c2 = float(slider_c2.get())
-            lab.update_plot(a1, b1, c1, a2, b2, c2)
-        except ValueError:
-            lab.status_label.config(text="Input tidak valid! Pastikan semua adalah angka.")
-
-    # --- Frame Kontrol ---
-    control_frame = ttk.Frame(root)
-    control_frame.pack(side=tk.BOTTOM, fill=tk.X, padx=10, pady=10)
-
-    # Frame untuk Persamaan 1
-    frame1 = ttk.LabelFrame(control_frame, text="Persamaan 1 (a₁x + b₁y = c₁)")
-    frame1.grid(row=0, column=0, padx=5, pady=5, sticky="ew")
-
-    tk.Label(frame1, text="a₁:").grid(row=0, column=0, padx=5, pady=2)
-    slider_a1 = ttk.Scale(frame1, from_=-5, to=5, orient="horizontal", command=update_from_gui)
-    slider_a1.set(1) # Default value
-    slider_a1.grid(row=0, column=1, padx=5, pady=2, sticky="ew")
-
-    tk.Label(frame1, text="b₁:").grid(row=1, column=0, padx=5, pady=2)
-    slider_b1 = ttk.Scale(frame1, from_=-5, to=5, orient="horizontal", command=update_from_gui)
-    slider_b1.set(-1) # Default value
-    slider_b1.grid(row=1, column=1, padx=5, pady=2, sticky="ew")
-
-    tk.Label(frame1, text="c₁:").grid(row=2, column=0, padx=5, pady=2)
-    slider_c1 = ttk.Scale(frame1, from_=-5, to=5, orient="horizontal", command=update_from_gui)
-    slider_c1.set(0) # Default value
-    slider_c1.grid(row=2, column=1, padx=5, pady=2, sticky="ew")
-
-    frame1.grid_columnconfigure(1, weight=1) # Membuat slider melebar
-
-    # Frame untuk Persamaan 2
-    frame2 = ttk.LabelFrame(control_frame, text="Persamaan 2 (a₂x + b₂y = c₂)")
-    frame2.grid(row=0, column=1, padx=5, pady=5, sticky="ew")
-
-    tk.Label(frame2, text="a₂:").grid(row=0, column=0, padx=5, pady=2)
-    slider_a2 = ttk.Scale(frame2, from_=-5, to=5, orient="horizontal", command=update_from_gui)
-    slider_a2.set(1) # Default value
-    slider_a2.grid(row=0, column=1, padx=5, pady=2, sticky="ew")
-
-    tk.Label(frame2, text="b₂:").grid(row=1, column=0, padx=5, pady=2)
-    slider_b2 = ttk.Scale(frame2, from_=-5, to=5, orient="horizontal", command=update_from_gui)
-    slider_b2.set(1) # Default value
-    slider_b2.grid(row=1, column=1, padx=5, pady=2, sticky="ew")
-
-    tk.Label(frame2, text="c₂:").grid(row=2, column=0, padx=5, pady=2)
-    slider_c2 = ttk.Scale(frame2, from_=-5, to=5, orient="horizontal", command=update_from_gui)
-    slider_c2.set(2) # Default value
-    slider_c2.grid(row=2, column=1, padx=5, pady=2, sticky="ew")
-
-    frame2.grid_columnconfigure(1, weight=1) # Membuat slider melebar
-
-    control_frame.grid_columnconfigure(0, weight=1)
-    control_frame.grid_columnconfigure(1, weight=1)
-
-    # Inisialisasi plot awal
-    update_from_gui()
-
-    root.mainloop()
-
-if __name__ == "__main__":
-    create_gui()
+            st.warning("Ada sedikit perbedaan dalam verifikasi. Mungkin karena pembulatan, atau ada kasus khusus.")
