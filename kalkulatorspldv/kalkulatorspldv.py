@@ -111,7 +111,7 @@ st.set_page_config(
     layout="wide",
     page_title="Kalkulator SPLDV Interaktif",
     initial_sidebar_state="expanded", # Sidebar dibuka secara default
-    icon="📊" # Contoh emoji alternatif, seperti grafik
+    icon="https://www.streamlit.io/favicon.ico" # Contoh URL favicon Streamlit
 )
 
 # --- Sidebar ---
