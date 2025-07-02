@@ -241,4 +241,4 @@ if st.button("Tampilkan Solusi Matematis"):
         st.error("Kedua garis **paralel** dan tidak berpotongan. **Tidak ada solusi**.")
 
 st.markdown("---")
-st.markdown("Dibuat dengan ❤️ oleh rarayuniaini)
+st.markdown("Dibuat dengan oleh rarayuniaini")
