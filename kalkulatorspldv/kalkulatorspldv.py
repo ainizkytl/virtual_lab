@@ -127,7 +127,7 @@ with st.sidebar:
         st.experimental_rerun()
 
 # --- Judul dan Deskripsi Utama ---
-st.title("✨ Kalkulator SPLDV Interaktif (Metode Discovery Learning)")
+st.title("✨ Kalkulator SPLDV (Metode Discovery Learning)")
 st.markdown("""
     Pelajari cara menemukan **titik potong** dari dua persamaan linear
     dengan **eksplorasi interaktif** dan **visualisasi grafis** yang menawan.
