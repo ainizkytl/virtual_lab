@@ -1,9 +1,9 @@
 import streamlit as st
 import matplotlib.pyplot as plt
 import numpy as np
-import time # Untuk simulasi loading/animasi
+import time
 
-# --- Fungsi-fungsi Utama (tidak banyak berubah) ---
+# --- Fungsi-fungsi Utama ---
 
 def hitung_y(persamaan, x_val):
     """
@@ -27,23 +27,23 @@ def plot_garis(persamaan1, persamaan2, x_range, color1, color2, point_x=None, po
     # Plot Persamaan 1
     if b1 != 0:
         y1 = hitung_y(persamaan1, x_range)
-        ax.plot(x_range, y1, label=f'{a1:.2f}x + {b1:.2f}y = {c1:.2f} (Garis 1)', color=color1, linewidth=2)
+        ax.plot(x_range, y1, label=f'{a1:.0f}x + {b1:.0f}y = {c1:.0f} (Garis 1)', color=color1, linewidth=2)
     else: # Garis vertikal
         if a1 != 0:
-            ax.axvline(x=c1/a1, color=color1, linestyle='--', label=f'x = {c1/a1:.2f} (Garis 1)', linewidth=2)
+            ax.axvline(x=c1/a1, color=color1, linestyle='--', label=f'x = {c1/a1:.0f} (Garis 1)', linewidth=2)
 
     # Plot Persamaan 2
     if b2 != 0:
         y2 = hitung_y(persamaan2, x_range)
-        ax.plot(x_range, y2, label=f'{a2:.2f}x + {b2:.2f}y = {c2:.2f} (Garis 2)', color=color2, linewidth=2)
+        ax.plot(x_range, y2, label=f'{a2:.0f}x + {b2:.0f}y = {c2:.0f} (Garis 2)', color=color2, linewidth=2)
     else: # Garis vertikal
         if a2 != 0:
-            ax.axvline(x=c2/a2, color=color2, linestyle='--', label=f'x = {c2/a2:.2f} (Garis 2)', linewidth=2)
+            ax.axvline(x=c2/a2, color=color2, linestyle='--', label=f'x = {c2/a2:.0f} (Garis 2)', linewidth=2)
 
     # Plot titik coba atau titik solusi yang ditemukan
     if point_x is not None and point_y is not None and not np.isnan(point_x) and not np.isinf(point_x) and not np.isnan(point_y) and not np.isinf(point_y):
         marker_color = 'purple' if not show_exact_point else 'green'
-        label_text = f'Titik Coba ({point_x:.2f}, {point_y:.2f})' if not show_exact_point else f'Solusi Akurat ({point_x:.2f}, {point_y:.2f})'
+        label_text = f'Titik Coba ({point_x:.0f}, {point_y:.0f})' if not show_exact_point else f'Solusi Akurat ({point_x:.0f}, {point_y:.0f})'
         ax.scatter(point_x, point_y, color=marker_color, s=150, zorder=5, label=label_text, edgecolor='black', linewidth=1.5)
 
     ax.set_xlabel("Nilai X", fontsize=12)
@@ -104,12 +104,12 @@ def hitung_solusi_spldv(persamaan1, persamaan2):
 st.set_page_config(
     layout="wide",
     page_title="Kalkulator SPLDV Interaktif",
-    initial_sidebar_state="expanded" # Sidebar dibuka secara default
+    initial_sidebar_state="expanded"
 )
 
 # --- Sidebar ---
 with st.sidebar:
-    st.image("https://www.freeiconspng.com/uploads/graph-icon-png-1.png", width=100) # Ikon menarik
+    st.image("https://www.freeiconspng.com/uploads/graph-icon-png-1.png", width=100)
     st.header("Pengaturan Aplikasi")
     st.markdown("""
         Selamat datang di Kalkulator SPLDV Interaktif!
@@ -122,7 +122,7 @@ with st.sidebar:
     line2_color = st.color_picker("Warna Garis 2", "#FF5733") # Oranye
 
     st.markdown("---")
-    st.write("Dibuat dengan ❤️ oleh Mahasiswa/i") # Footer di sidebar
+    st.write("Dibuat dengan ❤️ oleh Mahasiswa/i")
     if st.button("Reset Aplikasi"):
         st.experimental_rerun()
 
@@ -145,14 +145,14 @@ with col1:
     a1 = st.number_input("Koefisien a1 (untuk x):", value=1.0, key="a1_main", help="Koefisien variabel x pada Persamaan 1")
     b1 = st.number_input("Koefisien b1 (untuk y):", value=-1.0, key="b1_main", help="Koefisien variabel y pada Persamaan 1")
     c1 = st.number_input("Konstanta c1:", value=2.0, key="c1_main", help="Nilai konstanta pada Persamaan 1")
-    st.info(f"**Persamaan 1:** ${a1:.2f}x + {b1:.2f}y = {c1:.2f}$")
+    st.info(f"**Persamaan 1:** ${a1:.0f}x + {b1:.0f}y = {c1:.0f}$")
 
 with col2:
     st.subheader("Persamaan 2")
     a2 = st.number_input("Koefisien a2 (untuk x):", value=2.0, key="a2_main", help="Koefisien variabel x pada Persamaan 2")
     b2 = st.number_input("Koefisien b2 (untuk y):", value=1.0, key="b2_main", help="Koefisien variabel y pada Persamaan 2")
     c2 = st.number_input("Konstanta c2:", value=7.0, key="c2_main", help="Nilai konstanta pada Persamaan 2")
-    st.info(f"**Persamaan 2:** ${a2:.2f}x + {b2:.2f}y = {c2:.2f}$")
+    st.info(f"**Persamaan 2:** ${a2:.0f}x + {b2:.0f}y = {c2:.0f}$")
 
 persamaan1 = (a1, b1, c1)
 persamaan2 = (a2, b2, c2)
@@ -188,20 +188,20 @@ col_res1, col_res2, col_diff = st.columns(3)
 with col_res1:
     if b1 == 0:
         if a1 != 0:
-            st.code(f"Persamaan 1: x = {c1/a1:.2f} (Garis Vertikal)")
+            st.code(f"Persamaan 1: x = {c1/a1:.0f} (Garis Vertikal)")
         else:
             st.error("Persamaan 1 tidak valid.")
     else:
-        st.metric(label="Y1 (dari Persamaan 1)", value=f"{y1_coba_raw:.4f}")
+        st.metric(label="Y1 (dari Persamaan 1)", value=f"{y1_coba_raw:.0f}")
 
 with col_res2:
     if b2 == 0:
         if a2 != 0:
-            st.code(f"Persamaan 2: x = {c2/a2:.2f} (Garis Vertikal)")
+            st.code(f"Persamaan 2: x = {c2/a2:.0f} (Garis Vertikal)")
         else:
             st.error("Persamaan 2 tidak valid.")
     else:
-        st.metric(label="Y2 (dari Persamaan 2)", value=f"{y2_coba_raw:.4f}")
+        st.metric(label="Y2 (dari Persamaan 2)", value=f"{y2_coba_raw:.0f}")
 
 with col_diff:
     tolerance = 0.05 # Toleransi untuk dianggap "sama"
@@ -209,9 +209,9 @@ with col_diff:
 
     if b1 != 0 and b2 != 0:
         if diff_y < tolerance:
-            st.metric(label="Perbedaan |Y1 - Y2|", value=f"{diff_y:.4f}", delta="✅ Sangat dekat!", delta_color="normal")
+            st.metric(label="Perbedaan |Y1 - Y2|", value=f"{diff_y:.0f}", delta="✅ Sangat dekat!", delta_color="normal")
         else:
-            st.metric(label="Perbedaan |Y1 - Y2|", value=f"{diff_y:.4f}", delta="Perlu disesuaikan", delta_color="inverse")
+            st.metric(label="Perbedaan |Y1 - Y2|", value=f"{diff_y:.0f}", delta="Perlu disesuaikan", delta_color="inverse")
     else:
         st.markdown("Perbedaan Y tidak relevan untuk garis vertikal.")
 
@@ -223,7 +223,7 @@ if b1 != 0 and b2 != 0: # Kedua garis non-vertikal
     if abs(y1_coba_raw - y2_coba_raw) < tolerance:
         st.success(f"🎉 **SELAMAT!** Anda telah menemukan titik di mana $y_1$ dan $y_2$ sangat dekat!")
         st.balloons()
-        st.markdown(f"**Titik potong kira-kira adalah:** $({x_coba:.2f}, {(y1_coba_raw + y2_coba_raw) / 2:.2f})$")
+        st.markdown(f"**Titik potong kira-kira adalah:** $({x_coba:.0f}, {(y1_coba_raw + y2_coba_raw) / 2:.0f})$")
         is_solution_found_by_discovery = True
     else:
         st.warning(f"**Petunjuk:** $y_1$ dan $y_2$ belum sama. ")
@@ -241,16 +241,16 @@ elif b1 == 0 and b2 == 0: # Kedua garis vertikal
 elif b1 == 0 and a1 != 0: # Persamaan 1 vertikal, Persamaan 2 non-vertikal
     x_intersect_p1 = c1 / a1
     y_from_p2 = hitung_y(persamaan2, np.array([x_intersect_p1]))[0]
-    st.success(f"🎉 **SELAMAT!** Persamaan 1 adalah garis vertikal $x = {x_intersect_p1:.2f}$.")
-    st.markdown(f"Jika $x = {x_intersect_p1:.2f}$, maka $y_2$ dari Persamaan 2 adalah $\mathbf{{{y_from_p2:.2f}}}$.")
-    st.markdown(f"**Titik potongnya adalah:** $({x_intersect_p1:.2f}, {y_from_p2:.2f})$")
+    st.success(f"🎉 **SELAMAT!** Persamaan 1 adalah garis vertikal $x = {x_intersect_p1:.0f}$.")
+    st.markdown(f"Jika $x = {x_intersect_p1:.0f}$, maka $y_2$ dari Persamaan 2 adalah $\\mathbf{{{y_from_p2:.0f}}}$.")
+    st.markdown(f"**Titik potongnya adalah:** $({x_intersect_p1:.0f}, {y_from_p2:.0f})$")
     is_solution_found_by_discovery = True
 elif b2 == 0 and a2 != 0: # Persamaan 2 vertikal, Persamaan 1 non-vertikal
     x_intersect_p2 = c2 / a2
     y_from_p1 = hitung_y(persamaan1, np.array([x_intersect_p2]))[0]
-    st.success(f"🎉 **SELAMAT!** Persamaan 2 adalah garis vertikal $x = {x_intersect_p2:.2f}$.")
-    st.markdown(f"Jika $x = {x_intersect_p2:.2f}$, maka $y_1$ dari Persamaan 1 adalah $\mathbf{{{y_from_p1:.2f}}}$.")
-    st.markdown(f"**Titik potongnya adalah:** $({x_intersect_p2:.2f}, {y_from_p1:.2f})$")
+    st.success(f"🎉 **SELAMAT!** Persamaan 2 adalah garis vertikal $x = {x_intersect_p2:.0f}$.")
+    st.markdown(f"Jika $x = {x_intersect_p2:.0f}$, maka $y_1$ dari Persamaan 1 adalah $\\mathbf{{{y_from_p1:.0f}}}$.")
+    st.markdown(f"**Titik potongnya adalah:** $({x_intersect_p2:.0f}, {y_from_p1:.0f})$")
     is_solution_found_by_discovery = True
 
 
@@ -278,9 +278,6 @@ else: # Kedua garis non-vertikal
     if abs(y1_coba_raw - y2_coba_raw) < tolerance: # Jika sudah dekat
         plot_y_marker = (y1_coba_raw + y2_coba_raw) / 2
     else: # Jika belum dekat, plot di titik coba x
-        # Untuk visualisasi, kita bisa plot kedua titik y saat ini
-        # Namun, plot_garis hanya mendukung 1 titik marker.
-        # Kita akan plot titik tengah antara y1_coba_raw dan y2_coba_raw di x_coba
         plot_y_marker = (y1_coba_raw + y2_coba_raw) / 2
 
 # Pastikan plot_y_marker bukan NaN atau Inf
@@ -307,8 +304,8 @@ with st.expander("Klik untuk Menampilkan Solusi Matematis"):
         if solusi_x == float('inf') and solusi_y == float('inf'):
             st.info("ℹ️ Kedua persamaan adalah **garis yang sama**. Terdapat **tak terhingga solusi**.")
         else:
-            st.success(f"✅ Secara matematis, titik potongnya adalah: $x = \\mathbf{{{solusi_x:.4f}}}$, $y = \\mathbf{{{solusi_y:.4f}}}$")
-            st.markdown(f"**Titik potong akurat:** $\\left({solusi_x:.4f}, {solusi_y:.4f}\\right)$")
+            st.success(f"✅ Secara matematis, titik potongnya adalah: $x = \\mathbf{{{solusi_x:.0f}}}$, $y = \\mathbf{{{solusi_y:.0f}}}$")
+            st.markdown(f"**Titik potong akurat:** $\\left({solusi_x:.0f}, {solusi_y:.0f}\\right)$")
             # Tambahkan plot solusi matematis
             st.markdown("---")
             st.subheader("Plot dengan Titik Solusi Akurat")
